@@ -9,6 +9,9 @@ import {
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { QrCode, Camera, Check } from "lucide-react";
+import { supabase } from "@/supabase";
+
+
 
 interface QRScannerProps {
   open: boolean;
@@ -25,21 +28,48 @@ export function QRScanner({
 }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
-
-  const handleSimulateScan = () => {
+const handleSimulateScan = async () => {
     setIsScanning(true);
     
-    // Симуляция сканирования QR-кода
-    setTimeout(() => {
-      const qrCode = `ONOIPARK-${parkingId}-${Date.now()}`;
-      setScanned(true);
+    // Имитируем процесс сканирования на 2 секунды
+    setTimeout(async () => {
+      const mockScannedCarNumber = "01KG123"; 
+
+      // Проверяем бронь в Supabase
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('car_number', mockScannedCarNumber)
+        .eq('status', 'active')
+        .single();
+
       setIsScanning(false);
+
+      // Если бронь не найдена или неактивна
+      if (error || !data || data.has_reservation !== true) {
+        alert("❌ Доступ запрещен! Бронь не найдена.");
+        setScanned(false);
+        onOpenChange(false);
+        return;
+      }
+
+      // Если бронь успешна
+      setScanned(true);
+      const qrCode = `ONOIPARK-${parkingId}-${Date.now()}`;
       
+      // Помечаем бронь как использованную
+      await supabase
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('id', data.id);
+
+      // Закрываем окно через секунду
       setTimeout(() => {
         onScanSuccess(qrCode);
         setScanned(false);
         onOpenChange(false);
       }, 1000);
+
     }, 2000);
   };
 
