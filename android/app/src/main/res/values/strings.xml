@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OnoiPark</string>
+    <string name="title_activity_main">OnoiPark</string>
+    <string name="package_name">com.onoipark.app</string>
+    <string name="custom_url_scheme">com.onoipark.app</string>
+</resources>
