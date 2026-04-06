@@ -33,19 +33,28 @@ const handleSimulateScan = async () => {
     
     // Имитируем процесс сканирования на 2 секунды
     setTimeout(async () => {
-      const mockScannedCarNumber = "01KG123"; 
+      // 1. Тестовый номер машины из базы
+      const mockScannedCarNumber = "01KG123ABC"; 
 
-      // Проверяем бронь в Supabase
+      // 2. Ищем бронь и запрашиваем имя через связь
+      // as any отключает строгую типизацию, чтобы TS не ругался на users(full_name)
       const { data, error } = await supabase
         .from('bookings')
-        .select('*')
+        .select(`
+          id,
+          car_number,
+          has_reservation,
+          users (
+            full_name
+          )
+        `)
         .eq('car_number', mockScannedCarNumber)
         .eq('status', 'active')
-        .single();
+        .single() as any; 
 
       setIsScanning(false);
 
-      // Если бронь не найдена или неактивна
+      // 3. Если бронь не найдена или неактивна
       if (error || !data || data.has_reservation !== true) {
         alert("❌ Доступ запрещен! Бронь не найдена.");
         setScanned(false);
@@ -53,19 +62,22 @@ const handleSimulateScan = async () => {
         return;
       }
 
-      // Если бронь успешна
+      // 4. Если бронь успешна — включаем зеленую галочку
       setScanned(true);
-      const qrCode = `ONOIPARK-${parkingId}-${Date.now()}`;
       
-      // Помечаем бронь как использованную
+      // Вытягиваем имя юзера
+      const driverName = data.users?.full_name || "Зарегистрированный гость";
+      console.log("Заехал водитель:", driverName);
+
+      // 5. Помечаем бронь как завершенную (чтобы монитор на КПП среагировал)
       await supabase
         .from('bookings')
         .update({ status: 'completed' })
         .eq('id', data.id);
 
-      // Закрываем окно через секунду
+      // 6. Закрываем модалку через секунду
       setTimeout(() => {
-        onScanSuccess(qrCode);
+        onScanSuccess(`ONOIPARK-${parkingId}-${Date.now()}`);
         setScanned(false);
         onOpenChange(false);
       }, 1000);

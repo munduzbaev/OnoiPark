@@ -5,6 +5,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "./components/ui/tabs";
+import { BarrierMonitor } from "./components/BarrierMonitor";
 import { Button } from "./components/ui/button";
 import { AuthScreen } from "./components/AuthScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
@@ -102,6 +103,7 @@ function AppContent() {
   
   // Splash screen
   const [showSplash, setShowSplash] = useState(true);
+  const [showMonitor, setShowMonitor] = useState(false);
 
   // Загрузка парковок
   useEffect(() => {
@@ -502,10 +504,30 @@ function AppContent() {
               <span className="text-sm text-muted-foreground hidden sm:inline">
                 {user.plateNumber}
               </span>
+              <button
+                onClick={() => setShowMonitor((v) => !v)}
+                className="ml-2 px-3 py-1.5 text-xs rounded-lg border border-dashed border-muted-foreground/50 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                {showMonitor ? "← Назад" : "🛡 КПП"}
+              </button>
             </div>
           </div>
         </div>
       </header>
+
+      {showMonitor && (
+        <div className="fixed inset-0 z-50 bg-gray-900">
+          <div className="absolute top-4 left-4">
+            <button
+              onClick={() => setShowMonitor(false)}
+              className="px-4 py-2 text-sm text-white bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              ← Вернуться в приложение
+            </button>
+          </div>
+          <BarrierMonitor />
+        </div>
+      )}
 
       <main className="container mx-auto px-4 py-6 mb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

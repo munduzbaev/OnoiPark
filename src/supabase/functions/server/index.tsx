@@ -421,6 +421,10 @@ app.post('/make-server-8d1a5612/bookings/cancel', async (c) => {
     // Удаляем бронирование
     await kv.del(`booking:${bookingId}`);
     await kv.del(`user-booking:${user.id}`);
+    await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', bookingId);
 
     return c.json({ success: true, message: 'Бронирование отменено' });
 
@@ -472,6 +476,15 @@ app.post('/make-server-8d1a5612/bookings/create', async (c) => {
     // Сохраняем бронирование
     await kv.set(`booking:${booking.id}`, booking);
     await kv.set(`user-booking:${user.id}`, booking.id);
+    await supabase
+      .from('bookings')
+      .insert({
+        id: booking.id,
+        car_number: userData.plateNumber,
+        status: 'active',
+        has_reservation: true,
+        user_id: user.id,
+      });
 
     // Обновляем количество доступных мест
     const parking = await kv.get(`parking:${parkingId}`);
@@ -548,6 +561,10 @@ app.post('/make-server-8d1a5612/sessions/start', async (c) => {
     if (bookingId) {
       await kv.del(`booking:${bookingId}`);
       await kv.del(`user-booking:${user.id}`);
+      await supabase
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('id', bookingId);
     }
 
     return c.json({ success: true, session });
